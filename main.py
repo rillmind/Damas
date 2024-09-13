@@ -28,79 +28,61 @@ def mostrar_tabuleiro():
 class Damas:
     def __init__(self):
         self.tabuleiro = self.criar_tabuleiro()
-        self.current_player = 'X'  # 'X' para Jogador 1 e 'O' para Jogador 2
+        self.jogador_atual = 'X'
 
     def criar_tabuleiro(self):
-        # Cria um tabuleiro 8x8 com peças iniciais
-        tabuleiro = [[' ' if (i + j) % 2 == 0 else '.' for j in range(8)] for i in range(8)]
+        tabuleiro = [[' ' for _ in range(8)] for _ in range(8)]
         for i in range(3):
             for j in range(8):
                 if (i + j) % 2 != 0:
-                    tabuleiro[i][j] = 'X'  # Jogador 1
+                    tabuleiro[i][j] = 'X'
         for i in range(5, 8):
             for j in range(8):
                 if (i + j) % 2 != 0:
-                    tabuleiro[i][j] = 'O'  # Jogador 2
+                    tabuleiro[i][j] = 'O'
         return tabuleiro
 
-    def display_board(self):
-        print("  A B C D E F G H")
-        print(" +----------------+")
+    def mostrar_tabuleiro(self):
+        print("  1 2 3 4 5 6 7 8")
+        print(" +---------------+")
         for i in range(8):
-            print(f"{1 + i}  ", end="")  # Exibe a numeração ao lado
+            print(f"{8 - i}|", end="")
             for j in range(8):
                 print(self.tabuleiro[i][j], end=" ")
             print(" ")
-        print(" +----------------+")
+        print(" +---------------+")
 
-    def is_valid_move(self, start, end):
-        start_row, start_col = start
-        end_row, end_col = end
-        piece = self.tabuleiro[start_row][start_col]
+    def mover_peca(self, linha_inicial, coluna_inicial, linha_final, coluna_final):
+        self.tabuleiro[linha_final][coluna_final] = self.tabuleiro[linha_inicial][coluna_inicial]
+        self.tabuleiro[linha_inicial][coluna_inicial] = ' '
 
-        if self.tabuleiro[end_row][end_col] != ' ':
-            return False  # Casa de destino não está vazia
+    def promover_dama(self, linha, coluna):
+        if self.tabuleiro[linha][coluna] == 'X' and linha == 0:
+            self.tabuleiro[linha][coluna] = 'D'  # 'D' para dama
+        elif self.tabuleiro[linha][coluna] == 'O' and linha == 7:
+            self.tabuleiro[linha][coluna] = 'D'
 
-        # Movimento simples
-        if piece == 'X':
-            if end_row == start_row - 1 and abs(end_col - start_col) == 1:
-                return True  # Movimento simples para frente
-        elif piece == 'O':
-            if end_row == start_row + 1 and abs(end_col - start_col) == 1:
-                return True  # Movimento simples para frente
+    def verificar_movimento(self, linha_inicial, coluna_inicial, linha_final, coluna_final):
+        peca = self.tabuleiro[linha_inicial][coluna_inicial]
+        if abs(linha_final - linha_inicial) == 1 and abs(coluna_final - coluna_inicial) == 1:
+            return self.tabuleiro[linha_final][coluna_final] == ' '  # Movimento simples
+        elif abs(linha_final - linha_inicial) == 2 and abs(coluna_final - coluna_inicial) == 2:
+            linha_meio = (linha_inicial + linha_final) // 2
+            coluna_meio = (coluna_inicial + coluna_final) // 2
+            return (self.tabuleiro[linha_final][coluna_final] == ' ' and 
+                    self.tabuleiro[linha_meio][coluna_meio] != ' ' and 
+                    self.tabuleiro[linha_meio][coluna_meio] != peca)  # Captura
 
-        # Captura
-        if piece == 'X' and start_row > 1:
-            if (end_row == start_row - 2 and abs(end_col - start_col) == 2 and
-                self.tabuleiro[start_row - 1][(start_col + end_col) // 2] == 'O'):
-                return True  # Captura para cima
-        elif piece == 'O' and start_row < 6:
-            if (end_row == start_row + 2 and abs(end_col - start_col) == 2 and
-                self.tabuleiro[start_row + 1][(start_col + end_col) // 2] == 'X'):
-                return True  # Captura para baixo
+        return False  # Movimento inválido
 
-        return False
+    def realizar_captura(self, linha_inicial, coluna_inicial, linha_final, coluna_final):
+        linha_meio = (linha_inicial + linha_final) // 2
+        coluna_meio = (coluna_inicial + coluna_final) // 2
+        self.tabuleiro[linha_meio][coluna_meio] = ' '  # Remove a peça capturada
 
-    def move_piece(self, start, end):
-        start_row, start_col = start
-        end_row, end_col = end
-        piece = self.tabuleiro[start_row][start_col]
-
-        self.tabuleiro[end_row][end_col] = piece
-        self.tabuleiro[start_row][start_col] = ' '
-
-        # Verificar captura
-        if abs(end_row - start_row) == 2:
-            middle_row = (start_row + end_row) // 2
-            middle_col = (start_col + end_col) // 2
-            self.tabuleiro[middle_row][middle_col] = ' '  # Remove a peça capturada
-
-    def switch_player(self):
-        self.current_player = 'O' if self.current_player == 'X' else 'X'
-
-    def check_winner(self):
-        x_count = sum(row.count('X') for row in self.tabuleiro)
-        o_count = sum(row.count('O') for row in self.tabuleiro)
+    def checar_vencedor(self):
+        x_count = sum(row.count('X') for row in self.tabuleiro) + sum(row.count('D') for row in self.tabuleiro)
+        o_count = sum(row.count('O') for row in self.tabuleiro) + sum(row.count('D') for row in self.tabuleiro)
 
         if x_count == 0:
             return "O venceu!"
@@ -108,31 +90,49 @@ class Damas:
             return "X venceu!"
         return None
 
-    def play(self):
+    def jogar(self):
         while True:
-            self.display_board()
-            print(f"Turno do jogador {self.current_player}")
-            move = input("Digite o movimento (ex: A3 B4): ").strip()
-            try:
-                start_pos, end_pos = move.split()
-                start_row = 8 - int(start_pos[1])  # Ajuste para a numeração
-                start_col = ord(start_pos[0].upper()) - ord('A')
-                end_row = 8 - int(end_pos[1])  # Ajuste para a numeração
-                end_col = ord(end_pos[0].upper()) - ord('A')
+            self.mostrar_tabuleiro()
+            print(f"Turno do jogador {self.jogador_atual}")
+            jogada = input("Digite a posição da peça (linha coluna) e a posição de destino (linha coluna), ex: 3 4 4 5: ").strip()
 
-                if self.is_valid_move((start_row, start_col), (end_row, end_col)):
-                    self.move_piece((start_row, start_col), (end_row, end_col))
-                    winner = self.check_winner()
-                    if winner:
-                        self.display_board()
-                        print(winner)
+            try:
+                posicao = list(map(int, jogada.split()))
+                if len(posicao) != 4:
+                    raise ValueError
+
+                linha_inicial, coluna_inicial, linha_final, coluna_final = posicao
+                linha_inicial = 8 - linha_inicial
+                coluna_inicial -= 1
+                linha_final = 8 - linha_final
+                coluna_final -= 1
+
+                if not (0 <= linha_inicial < 8 and 0 <= coluna_inicial < 8 and
+                        0 <= linha_final < 8 and 0 <= coluna_final < 8):
+                    print("Movimento fora dos limites. Tente novamente.")
+                    continue
+
+                if self.verificar_movimento(linha_inicial, coluna_inicial, linha_final, coluna_final):
+                    self.mover_peca(linha_inicial, coluna_inicial, linha_final, coluna_final)
+                    self.promover_dama(linha_final, coluna_final)
+
+                    if abs(linha_final - linha_inicial) == 2:
+                        self.realizar_captura(linha_inicial, coluna_inicial, linha_final, coluna_final)
+
+                    vencedor = self.checar_vencedor()
+                    if vencedor:
+                        self.mostrar_tabuleiro()
+                        print(vencedor)
                         break
-                    self.switch_player()
+                    
+                    # Trocar o jogador
+                    self.jogador_atual = 'O' if self.jogador_atual == 'X' else 'X'
                 else:
                     print("Movimento inválido. Tente novamente.")
             except (ValueError, IndexError):
-                print("Entrada inválida. Utilize o formato A1 B2.")
+                print("Entrada inválida. Utilize o formato 'linha coluna linha coluna'.")
 
 if __name__ == "__main__":
-    game = Damas()
-    game.play()
+    jogo = Damas()
+    jogo.jogar()
+
