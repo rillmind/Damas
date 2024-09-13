@@ -1,6 +1,6 @@
-#Damas
+# Damas
 
-###Notas:
+### Notas:
 
 Um jogo comum de damas
 
