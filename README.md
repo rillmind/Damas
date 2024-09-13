@@ -5,7 +5,7 @@
 Um jogo comum de damas
 
 ### Trecho de código:
-```
+```python
 def mostrar_tabuleiro():
     print("  A B C D E F G H")
     number = 1
