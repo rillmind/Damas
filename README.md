@@ -4,4 +4,4 @@
 
 Um jogo comum de damas
 
-![Raul Holanda](https://github.com/rillmind/)
+![Raul Holanda](https://avatars.githubusercontent.com/u/120270846?v=4)
