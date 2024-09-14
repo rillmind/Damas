@@ -1,30 +1,3 @@
-# t0 = [".", ".", ".", ".", ".", ".", ".", "."]
-# t1 = t0[:]
-# t2 = t0[:]
-# t3 = t0[:]
-# t4 = t0[:]
-# t5 = t0[:]
-# t6 = t0[:]
-# t7 = t0[:]
-# t8 = [t0, t1, t2, t3, t4, t5, t6, t7]
-
-#     print(' ')
-#     for c2 in c:
-# for c in t8:
-#         print(c2, end=' ')
-
-# print()
-
-tabuleiroj = [["." for _ in range(8)] for _ in range(8)]
-
-def mostrar_tabuleiro():
-    print("  A B C D E F G H")
-    number = 1
-    for linha in tabuleiroj:
-        print(number, end=" ")
-        print(" ".join(linha))
-        number += 1
-
 class Damas:
     def __init__(self):
         self.tabuleiro = self.criar_tabuleiro()
@@ -35,18 +8,18 @@ class Damas:
         for i in range(3):
             for j in range(8):
                 if (i + j) % 2 != 0:
-                    tabuleiro[i][j] = 'X'
+                    tabuleiro[i][j] = 'O'
         for i in range(5, 8):
             for j in range(8):
                 if (i + j) % 2 != 0:
-                    tabuleiro[i][j] = 'O'
+                    tabuleiro[i][j] = 'X'
         return tabuleiro
 
     def mostrar_tabuleiro(self):
         print("  1 2 3 4 5 6 7 8")
         print(" +---------------+")
         for i in range(8):
-            print(f"{8 - i}|", end="")
+            print(f"{8 - i} ", end="")
             for j in range(8):
                 print(self.tabuleiro[i][j], end=" ")
             print(" ")
@@ -57,32 +30,66 @@ class Damas:
         self.tabuleiro[linha_inicial][coluna_inicial] = ' '
 
     def promover_dama(self, linha, coluna):
-        if self.tabuleiro[linha][coluna] == 'X' and linha == 0:
-            self.tabuleiro[linha][coluna] = 'D'  # 'D' para dama
-        elif self.tabuleiro[linha][coluna] == 'O' and linha == 7:
-            self.tabuleiro[linha][coluna] = 'D'
+        if self.tabuleiro[linha][coluna] == 'O' and linha == 7:  # X atinge a última linha do oponente
+            self.tabuleiro[linha][coluna] = 'Q'  # Dama de X
+        elif self.tabuleiro[linha][coluna] == 'X' and linha == 0:  # O atinge a última linha do oponente
+            self.tabuleiro[linha][coluna] = 'K'  # Dama de O
 
     def verificar_movimento(self, linha_inicial, coluna_inicial, linha_final, coluna_final):
         peca = self.tabuleiro[linha_inicial][coluna_inicial]
-        if abs(linha_final - linha_inicial) == 1 and abs(coluna_final - coluna_inicial) == 1:
-            return self.tabuleiro[linha_final][coluna_final] == ' '  # Movimento simples
-        elif abs(linha_final - linha_inicial) == 2 and abs(coluna_final - coluna_inicial) == 2:
-            linha_meio = (linha_inicial + linha_final) // 2
-            coluna_meio = (coluna_inicial + coluna_final) // 2
-            return (self.tabuleiro[linha_final][coluna_final] == ' ' and 
-                    self.tabuleiro[linha_meio][coluna_meio] != ' ' and 
-                    self.tabuleiro[linha_meio][coluna_meio] != peca)  # Captura
 
+        if peca == 'K' or peca == 'Q':
+            # Movimento diagonal para a dama
+            if abs(linha_final - linha_inicial) == abs(coluna_final - coluna_inicial):
+                i, j = linha_inicial, coluna_inicial
+                direcao_linha = 1 if linha_final > linha_inicial else -1
+                direcao_coluna = 1 if coluna_final > coluna_inicial else -1
+                i += direcao_linha
+                j += direcao_coluna
+
+                # Verificando se há peças a serem capturadas
+                while i != linha_final and j != coluna_final:
+                    if self.tabuleiro[i][j] != ' ':
+                        # Se houver peça inimiga no caminho
+                        if self.tabuleiro[i][j] != peca:  # Verifique se não é a mesma peça
+                            # Verifique se a casa final está vazia para capturar
+                            if self.tabuleiro[linha_final][coluna_final] == ' ':
+                                return True  # Movimento de captura
+                        return False  # Se houver uma peça própria ou uma peça inimiga no caminho
+                    i += direcao_linha
+                    j += direcao_coluna
+
+                # A dama pode se mover livremente para uma casa vazia
+                return self.tabuleiro[linha_final][coluna_final] == ' '
+
+        else:
+            # Movimentos normais
+            if abs(linha_final - linha_inicial) == 1 and abs(coluna_final - coluna_inicial) == 1:
+                return self.tabuleiro[linha_final][coluna_final] == ' '  # Movimento simples
+            elif abs(linha_final - linha_inicial) == 2 and abs(coluna_final - coluna_inicial) == 2:
+                linha_meio = (linha_inicial + linha_final) // 2
+                coluna_meio = (coluna_inicial + coluna_final) // 2
+                return (self.tabuleiro[linha_final][coluna_final] == ' ' and 
+                        self.tabuleiro[linha_meio][coluna_meio] != ' ' and 
+                        self.tabuleiro[linha_meio][coluna_meio] != peca)  # Captura
         return False  # Movimento inválido
 
     def realizar_captura(self, linha_inicial, coluna_inicial, linha_final, coluna_final):
-        linha_meio = (linha_inicial + linha_final) // 2
-        coluna_meio = (coluna_inicial + coluna_final) // 2
-        self.tabuleiro[linha_meio][coluna_meio] = ' '  # Remove a peça capturada
+        peca = self.tabuleiro[linha_inicial][coluna_inicial]
+        direcao_linha = 1 if linha_final > linha_inicial else -1
+        direcao_coluna = 1 if coluna_final > coluna_inicial else -1
+
+        # Captura múltipla para dama
+        i, j = linha_inicial + direcao_linha, coluna_inicial + direcao_coluna
+        while i != linha_final and j != coluna_final:
+            if self.tabuleiro[i][j] != ' ' and self.tabuleiro[i][j] != peca:
+                self.tabuleiro[i][j] = ' '  # Captura a peça
+            i += direcao_linha
+            j += direcao_coluna
 
     def checar_vencedor(self):
-        x_count = sum(row.count('X') for row in self.tabuleiro) + sum(row.count('D') for row in self.tabuleiro)
-        o_count = sum(row.count('O') for row in self.tabuleiro) + sum(row.count('D') for row in self.tabuleiro)
+        x_count = sum(row.count('X') for row in self.tabuleiro) + sum(row.count('K') for row in self.tabuleiro)
+        o_count = sum(row.count('O') for row in self.tabuleiro) + sum(row.count('Q') for row in self.tabuleiro)
 
         if x_count == 0:
             return "O venceu!"
@@ -116,7 +123,8 @@ class Damas:
                     self.mover_peca(linha_inicial, coluna_inicial, linha_final, coluna_final)
                     self.promover_dama(linha_final, coluna_final)
 
-                    if abs(linha_final - linha_inicial) == 2:
+                    # Realizar captura
+                    if abs(linha_final - linha_inicial) > 1:  # Captura
                         self.realizar_captura(linha_inicial, coluna_inicial, linha_final, coluna_final)
 
                     vencedor = self.checar_vencedor()
@@ -132,7 +140,6 @@ class Damas:
             except (ValueError, IndexError):
                 print("Entrada inválida. Utilize o formato 'linha coluna linha coluna'.")
 
-if __name__ == "__main__":
-    jogo = Damas()
-    jogo.jogar()
+jogo = Damas()
+jogo.jogar()
 
